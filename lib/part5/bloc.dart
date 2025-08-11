@@ -1,10 +1,14 @@
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:news_app/part5/event.dart';
 import 'package:news_app/part5/news.dart';
+import 'package:news_app/part5/news_repository.dart';
+import 'package:news_app/part5/request_state.dart';
 import 'package:news_app/part5/state.dart';
 
 class NewsScreenBloc extends Bloc<NewsScreenEvent, NewsScreenState> {
-  NewsScreenBloc(): super(NewsScreenState()) {
+  final NewsRepository _newsRepository;
+
+  NewsScreenBloc(this._newsRepository): super(NewsScreenState()) {
     on<LoadNewsEvent>(_onLoadNews);
   }
 
@@ -12,19 +16,14 @@ class NewsScreenBloc extends Bloc<NewsScreenEvent, NewsScreenState> {
       LoadNewsEvent event,
       Emitter<NewsScreenState> emit
   ) async {
-    final newState = NewsScreenState(
-      newsList: state.newsList,
-      isLoading: true,
-    );
-    emit(newState);
+    emit(state.copyWith(
+      newsListRequestState: const RequestStateLoading(),
+    ));
 
-    await Future.delayed(Duration(seconds: 3));
+    final response = await _newsRepository.getNews();
 
-    final newState2 = NewsScreenState(
-      newsList: List.generate(10, (index) => News(title: "News no: $index")),
-      isLoading: false,
-    );
-
-    emit(newState2);
+    emit(state.copyWith(
+      newsListRequestState: response,
+    ));
   }
 }
